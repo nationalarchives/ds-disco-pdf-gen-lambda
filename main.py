@@ -1,10 +1,10 @@
 import PrepareFiles
 
-data = '{ "IAID": "C12738155", "RID": "0e50b4e6-e582-43d3-b38f-f8741c770efa", "AvgSize": 5000, "DeliveryType": "PDF", "CatRef": "DEFE 24/2061/1" }'
+data = '{ "Iaid": "C7351413", "ReplicaId": "769c283b-1676-4eb6-a85b-63c7e6eb5272", "Reference": "WO 95/1105/1", "FileExtension": "pdf", "MaxDeliverySize": 46925 }'
 
 input_vars = PrepareFiles.get_input_variables(data)
 
-replica = PrepareFiles.get_replica(input_vars['RID'])
+replica = PrepareFiles.get_replica(input_vars['ReplicaId'])
 
-replica.process_files(input_vars['DeliveryType'],input_vars['AvgSize'])
+replica.process_files(input_vars['FileExtension'],input_vars['MaxDeliverySize'],input_vars['Reference'])
 

@@ -6,6 +6,7 @@ from io import BytesIO
 session = boto3.session.Session(profile_name='intersiteadmin')
 s3_client = session.client('s3')
 
+
 def get_input_variables(data):
     list = json.loads(data)
     return list
@@ -24,9 +25,9 @@ class Replica:
         self.replica_data = content
 
 
-    def process_files(self, delivery_type, max_deliveryfile_size):
-        if delivery_type == "PDF":
-            self._create_pdf(max_deliveryfile_size)
+    def process_files(self, delivery_type, max_deliveryfile_size, reference):
+        if delivery_type == "pdf":
+            self._create_pdf(max_deliveryfile_size, reference)
         # else:
         #     create_zip(cal_avg_size)
 
@@ -45,9 +46,15 @@ class Replica:
         return output_file_list
 
 
-    def _create_pdf(self, max_deliveryfile_size):
+    def _create_pdf(self, max_deliveryfile_size, reference):
+        # TODO add reference and page number to PDF
+        # TODO update digitalfile mata data with progress
+        # TODO keep track of list of PDFs
+        # TODO write list of PDFs back to digitalfile meta data
         batch_list = self._create_image_list(max_deliveryfile_size)
+        output_name_prefix = self._create_file_name_prefix(reference)
         images = []
+        n = 1
         for batch in batch_list:
             for image_key in batch:
                 obj = s3_client.get_object(Bucket='tna-digital-files',Key=image_key)
@@ -56,24 +63,14 @@ class Replica:
                 if im.mode == "RGBA":
                     im = im.convert("RGB")
                 images.append(im)
-            images[0].save('test.pdf', save_all=True, quality=100, append_images=images[1:])
+            output_name = output_name_prefix+'{:02d}'.format(n)+'.pdf'
+            n += 1
+            images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
 
 
+    def _create_file_name_prefix(self,reference):
+        name = reference.replace(" ", "-")
+        name = name.replace("/", "-")
+        return name+'_'
 
-#
-#     def create_pdf(images):
-#         images[0].save(out_fname, save_all=True, quality=100, append_images=images[1:])
-#
-#     def get_file(item):
-#         return file
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+
