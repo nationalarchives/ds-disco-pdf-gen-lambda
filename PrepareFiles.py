@@ -6,7 +6,7 @@ from io import BytesIO
 session = boto3.session.Session(profile_name='intersiteadmin')
 s3_client = session.client('s3')
 
-def sqs_json(data):
+def get_input_variables(data):
     list = json.loads(data)
     return list
 
