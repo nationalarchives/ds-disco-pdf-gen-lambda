@@ -7,11 +7,13 @@ session = boto3.session.Session(profile_name='intersiteadmin')
 s3_client = session.client('s3')
 
 def get_input_variables(data):
+    # TODO Interface with SQS here to get the real input data
     list = json.loads(data)
     return list
 
 
 def get_replica(rid):
+    # TODO Interface with the DigitalMetadataAPI to fetch a real replica here
     with open('response.json') as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
@@ -25,6 +27,7 @@ class Replica:
 
 
     def process_files(self, delivery_type, max_deliveryfile_size):
+        # TODO Code the ZIP case. Can any of the PDF case be generalised?
         if delivery_type == "PDF":
             self._create_pdf(max_deliveryfile_size)
         # else:
@@ -46,6 +49,8 @@ class Replica:
 
 
     def _create_pdf(self, max_deliveryfile_size):
+        # TODO Get the Catalogue Reference from the input data and name the PDFs according to the preparedfiles
+        # naming convention
         batch_list = self._create_image_list(max_deliveryfile_size)
         images = []
         for batch in batch_list:
