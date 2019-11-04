@@ -1,4 +1,6 @@
 from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
 import json
 import boto3
 from io import BytesIO
@@ -53,6 +55,7 @@ class Replica:
         # TODO write list of PDFs back to digitalfile meta data
         batch_list = self._create_image_list(max_deliveryfile_size)
         output_name_prefix = self._create_file_name_prefix(reference)
+        font = ImageFont.truetype('./font/Arial.ttf', 16)
         images = []
         n = 1
         for batch in batch_list:
@@ -60,17 +63,23 @@ class Replica:
                 obj = s3_client.get_object(Bucket='tna-digital-files',Key=image_key)
                 image = obj['Body'].read()
                 im = Image.open(BytesIO(image))
+                # width, height = im.size
+                # TODO resize image according to aspect ratio and max dimensions (782x1106)
                 if im.mode == "RGBA":
                     im = im.convert("RGB")
+                draw = ImageDraw.Draw(im)
+                draw.text((4, 2), 'The National Archives reference '+reference, (0, 0, 0), font)
                 images.append(im)
             output_name = output_name_prefix+'{:02d}'.format(n)+'.pdf'
             n += 1
-            images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
+            images[0].save(output_name, save_all=True, quality=70, append_images=images[1:])
 
 
     def _create_file_name_prefix(self,reference):
         name = reference.replace(" ", "-")
         name = name.replace("/", "-")
         return name+'_'
+
+
 
 
