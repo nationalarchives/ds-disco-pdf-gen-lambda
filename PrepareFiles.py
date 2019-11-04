@@ -1,7 +1,10 @@
 from PIL import Image
 import json
 import boto3
-client = boto3.client('s3')
+from io import BytesIO
+
+session = boto3.session.Session(profile_name='intersiteadmin')
+s3_client = session.client('s3')
 
 def sqs_json(data):
     list = json.loads(data)
@@ -21,9 +24,9 @@ class Replica:
         self.replica_data = content
 
 
-    def process_files(self, delivery_type, cal_avg_size):
+    def process_files(self, delivery_type, max_deliveryfile_size):
         if delivery_type == "PDF":
-            self._create_pdf(cal_avg_size)
+            self._create_pdf(max_deliveryfile_size)
         # else:
         #     create_zip(cal_avg_size)
 
@@ -42,15 +45,18 @@ class Replica:
         return output_file_list
 
 
-    def _create_pdf(self, cal_avg_size):
-        batch_list = self._create_image_list(cal_avg_size)
+    def _create_pdf(self, max_deliveryfile_size):
+        batch_list = self._create_image_list(max_deliveryfile_size)
         images = []
         for batch in batch_list:
-            for image in batch:
-                im = Image.open(image)
+            for image_key in batch:
+                obj = s3_client.get_object(Bucket='tna-digital-files',Key=image_key)
+                image = obj['Body'].read()
+                im = Image.open(BytesIO(image))
                 if im.mode == "RGBA":
                     im = im.convert("RGB")
                 images.append(im)
+            images[0].save('test.pdf', save_all=True, quality=100, append_images=images[1:])
 
 
 
