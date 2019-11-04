@@ -31,14 +31,14 @@ class Replica:
         #     create_zip(cal_avg_size)
 
 
-    def _create_image_list( self, cal_avg_size ):
+    def _create_image_list(self, max_deliveryfile_size):
         output_file_list = []
         size = 0
         this_pdf = []
         for file in self.replica_data['files']:
             this_pdf.append(file['name'])
             size = file['size'] + size
-            if size > cal_avg_size:
+            if size > max_deliveryfile_size:
                 output_file_list.append(this_pdf)
                 size = 0
                 this_pdf = []
