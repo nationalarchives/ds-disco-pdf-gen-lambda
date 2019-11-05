@@ -5,6 +5,7 @@ from PIL import ImageDraw
 import json
 import boto3
 from io import BytesIO
+import PreparedFiles_config
 
 session = boto3.session.Session(profile_name='intersiteadmin')
 s3_client = session.client('s3')
@@ -55,10 +56,10 @@ class Replica:
         return output_file_list
 
     def _create_pdf(self, max_deliveryfile_size, reference):
-        # TODO add reference and page number to PDF
         # TODO update digitalfile mata data with progress
         # TODO keep track of list of PDFs
         # TODO write list of PDFs back to digitalfile meta data
+        # TODO push pdfs to S3
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
@@ -82,6 +83,13 @@ class Replica:
             print(output_name)
             n += 1
             images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
+            r = s3_client.put_object(
+                ACL='public-read',
+                Body=open(output_name, 'rb'),
+                ContentType='application/pdf',
+                Bucket=PreparedFiles_config.S3_BUCKET_NAME,
+                Key="test-"+output_name
+            )
 
     def _create_file_name_prefix(self, reference):
         name = reference.replace(" ", "-")
