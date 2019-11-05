@@ -1,3 +1,4 @@
+import math
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
@@ -10,11 +11,13 @@ s3_client = session.client('s3')
 
 
 def get_input_variables(data):
+    # TODO Interface with SQS here to get the real input data
     list = json.loads(data)
     return list
 
 
 def get_replica(rid):
+    # TODO Interface with the DigitalMetadataAPI to fetch a real replica here
     with open('response.json') as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
@@ -23,14 +26,16 @@ def get_replica(rid):
 
 
 class Replica:
-    def __init__(self, content):
+    def __init__( self, content ):
         self.replica_data = content
 
     def process_files(self, delivery_type, max_deliveryfile_size, reference):
+        # TODO Code the ZIP case. Can any of the PDF case be generalised?
         if delivery_type == "pdf":
             self._create_pdf(max_deliveryfile_size, reference)
         # else:
         #     create_zip(cal_avg_size)
+
 
     def _create_image_list(self, max_deliveryfile_size):
         output_file_list = []
@@ -57,17 +62,18 @@ class Replica:
         n = 1
         for batch in batch_list:
             for image_key in batch:
-                obj = s3_client.get_object(Bucket='tna-digital-files', Key=image_key)
                 print(image_key)
-                image = obj['Body'].read()
-                im = Image.open(BytesIO(image))
-                size = (self._calculate_im_size(im.size))
-                im.thumbnail(size, Image.ANTIALIAS)
-                if im.mode == "RGBA":
-                    im = im.convert("RGB")
-                draw = ImageDraw.Draw(im)
-                draw.text((4, 2), 'The National Archives reference ' + reference, (0, 0, 0), font)
-                images.append(im)
+                s3_obj = s3_client.get_object(Bucket='tna-digital-files', Key=image_key)
+                image_bytes = s3_obj['Body'].read()
+                image_object = Image.open(BytesIO(image_bytes))
+                target_size = (self._calculate_im_size(image_object.size))
+                image_object.thumbnail(target_size, Image.ANTIALIAS)
+                if image_object.mode == "RGBA":
+                    image_object = image_object.convert("RGB")
+                canvas = self._compose_canvas(image_object)
+                draw = ImageDraw.Draw(canvas)
+                draw.text((4, 2), 'The National Archives reference ' + reference + '       © Crown Copyright', (0, 0, 0), font)
+                images.append(canvas)
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             print(output_name)
             n += 1
@@ -101,3 +107,20 @@ class Replica:
                 new_height = max_short_edge
                 new_width = new_height / height * width
         return new_width, new_height
+
+    def _compose_canvas(self,image_object):
+        image_width, image_height = image_object.size
+        canvas_width = 0
+        canvas_height = 0
+        if image_width < image_height:
+            # Portrait
+            canvas_width = 842
+            canvas_height = 1191
+        else:
+            canvas_width = 1191
+            canvas_height = 842
+        canvas = Image.new(image_object.mode, (canvas_width, canvas_height), (255, 255, 255))
+        x1 = int(math.floor((canvas_width - image_width) / 2))
+        y1 = int(math.floor((canvas_height - image_height) / 2))
+        canvas.paste(image_object, (x1, y1, x1 + image_width, y1 + image_height))
+        return canvas
