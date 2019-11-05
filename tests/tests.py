@@ -1,4 +1,5 @@
 import unittest
+import json
 import PrepareFiles
 
 data = '{ "Iaid": "C7351413", "ReplicaId": "769c283b-1676-4eb6-a85b-63c7e6eb5272", "Reference": "WO 95/1105/1", "FileExtension": "pdf", "MaxDeliverySize": 46925 }'
@@ -35,3 +36,9 @@ class TestMethods(unittest.TestCase):
         # Test image size 3500x1475
         size = (replica._calculate_im_size((3500, 1475)))
         self.assertEqual(size, (1106, 466.1))
+
+    def test_create_file_name_prefix(self):
+        replica = PrepareFiles.Replica(data)
+        output = replica._create_file_name_prefix('WO 95/1105/1')
+        self.assertEqual(output, 'WO-95-1105-1_')
+

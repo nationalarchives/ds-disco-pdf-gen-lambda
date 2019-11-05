@@ -15,7 +15,7 @@ def get_input_variables(data):
 
 
 def get_replica(rid):
-    with open('response.json') as content_file:
+    with open('tests/response.json') as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
