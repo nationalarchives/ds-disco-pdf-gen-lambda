@@ -61,14 +61,7 @@ class Replica:
                 print(image_key)
                 image = obj['Body'].read()
                 im = Image.open(BytesIO(image))
-                width, height = im.size
-                if (782 / width * height) > 1106:
-                    new_width = 1106 / height * width
-                    new_height = 1106
-                else:
-                    new_width = 1106
-                    new_height = 782 / width * height
-                size = (new_width, new_height)
+                size = (self._calculate_im_size(im.size))
                 im.thumbnail(size, Image.ANTIALIAS)
                 if im.mode == "RGBA":
                     im = im.convert("RGB")
@@ -85,4 +78,26 @@ class Replica:
         name = name.replace("/", "-")
         return name + '_'
 
-
+    def _calculate_im_size(self, size):
+        width, height = size
+        max_long_edge = 1106
+        max_short_edge = 782
+        if width < height:
+            # Portrait
+            ratio = width / height
+            if ratio > 0.707:
+                new_width = max_short_edge
+                new_height = new_width / width * height
+            else:
+                new_height = max_long_edge
+                new_width = new_height / height * width
+        else:
+            # Landscape
+            ratio = width / height
+            if ratio > 1.4144:
+                new_width = max_long_edge
+                new_height = new_width / width * height
+            else:
+                new_height = max_short_edge
+                new_width = new_height / height * width
+        return new_width, new_height
