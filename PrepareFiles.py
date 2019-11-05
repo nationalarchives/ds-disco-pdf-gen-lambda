@@ -18,7 +18,7 @@ def get_input_variables(data):
 
 def get_replica(rid):
     # TODO Interface with the DigitalMetadataAPI to fetch a real replica here
-    with open('response.json') as content_file:
+    with open('tests/response.json') as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
@@ -36,18 +36,22 @@ class Replica:
         # else:
         #     create_zip(cal_avg_size)
 
-
-    def _create_image_list(self, max_deliveryfile_size):
+    def _create_image_list(self, max_deliveryfile_size, data):
         output_file_list = []
         size = 0
         this_pdf = []
-        for file in self.replica_data['files']:
+        length = len(data)
+        count = 1
+        for file in data:
             this_pdf.append(file['name'])
             size = file['size'] + size
             if size > max_deliveryfile_size:
                 output_file_list.append(this_pdf)
                 size = 0
                 this_pdf = []
+            elif length == count:
+                output_file_list.append(this_pdf)
+            count += 1
         return output_file_list
 
     def _create_pdf(self, max_deliveryfile_size, reference):
@@ -55,7 +59,7 @@ class Replica:
         # TODO update digitalfile mata data with progress
         # TODO keep track of list of PDFs
         # TODO write list of PDFs back to digitalfile meta data
-        batch_list = self._create_image_list(max_deliveryfile_size)
+        batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
         images = []
