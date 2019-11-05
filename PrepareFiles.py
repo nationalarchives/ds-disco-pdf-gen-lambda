@@ -32,11 +32,11 @@ class Replica:
         # else:
         #     create_zip(cal_avg_size)
 
-    def _create_image_list(self, max_deliveryfile_size):
+    def _create_image_list(self, max_deliveryfile_size, data):
         output_file_list = []
         size = 0
         this_pdf = []
-        for file in self.replica_data['files']:
+        for file in data:
             this_pdf.append(file['name'])
             size = file['size'] + size
             if size > max_deliveryfile_size:
@@ -50,7 +50,7 @@ class Replica:
         # TODO update digitalfile mata data with progress
         # TODO keep track of list of PDFs
         # TODO write list of PDFs back to digitalfile meta data
-        batch_list = self._create_image_list(max_deliveryfile_size)
+        batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
         images = []
