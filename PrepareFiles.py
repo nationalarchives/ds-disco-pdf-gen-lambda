@@ -23,16 +23,14 @@ def get_replica(rid):
 
 
 class Replica:
-    def __init__( self, content ):
+    def __init__(self, content):
         self.replica_data = content
-
 
     def process_files(self, delivery_type, max_deliveryfile_size, reference):
         if delivery_type == "pdf":
             self._create_pdf(max_deliveryfile_size, reference)
         # else:
         #     create_zip(cal_avg_size)
-
 
     def _create_image_list(self, max_deliveryfile_size):
         output_file_list = []
@@ -47,7 +45,6 @@ class Replica:
                 this_pdf = []
         return output_file_list
 
-
     def _create_pdf(self, max_deliveryfile_size, reference):
         # TODO add reference and page number to PDF
         # TODO update digitalfile mata data with progress
@@ -60,26 +57,32 @@ class Replica:
         n = 1
         for batch in batch_list:
             for image_key in batch:
-                obj = s3_client.get_object(Bucket='tna-digital-files',Key=image_key)
+                obj = s3_client.get_object(Bucket='tna-digital-files', Key=image_key)
+                print(image_key)
                 image = obj['Body'].read()
                 im = Image.open(BytesIO(image))
-                # width, height = im.size
-                # TODO resize image according to aspect ratio and max dimensions (782x1106)
+                width, height = im.size
+                if (782 / width * height) > 1106:
+                    new_width = 1106 / height * width
+                    new_height = 1106
+                else:
+                    new_width = 1106
+                    new_height = 782 / width * height
+                size = (new_width, new_height)
+                im.thumbnail(size, Image.ANTIALIAS)
                 if im.mode == "RGBA":
                     im = im.convert("RGB")
                 draw = ImageDraw.Draw(im)
-                draw.text((4, 2), 'The National Archives reference '+reference, (0, 0, 0), font)
+                draw.text((4, 2), 'The National Archives reference ' + reference, (0, 0, 0), font)
                 images.append(im)
-            output_name = output_name_prefix+'{:02d}'.format(n)+'.pdf'
+            output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
+            print(output_name)
             n += 1
-            images[0].save(output_name, save_all=True, quality=70, append_images=images[1:])
+            images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
 
-
-    def _create_file_name_prefix(self,reference):
+    def _create_file_name_prefix(self, reference):
         name = reference.replace(" ", "-")
         name = name.replace("/", "-")
-        return name+'_'
-
-
+        return name + '_'
 
 
