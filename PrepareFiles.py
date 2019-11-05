@@ -36,6 +36,8 @@ class Replica:
         output_file_list = []
         size = 0
         this_pdf = []
+        length = len(data)
+        count = 1
         for file in data:
             this_pdf.append(file['name'])
             size = file['size'] + size
@@ -43,6 +45,9 @@ class Replica:
                 output_file_list.append(this_pdf)
                 size = 0
                 this_pdf = []
+            elif length == count:
+                output_file_list.append(this_pdf)
+            count += 1
         return output_file_list
 
     def _create_pdf(self, max_deliveryfile_size, reference):
