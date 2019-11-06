@@ -82,6 +82,7 @@ class Replica:
             print(output_name)
             n += 1
             images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
+            # TODO check file has successfully uploaded to s3 and then delete local file
             r = s3_client.put_object(
                 ACL='public-read',
                 Body=open(output_name, 'rb'),
