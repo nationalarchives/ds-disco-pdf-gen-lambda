@@ -59,7 +59,6 @@ class Replica:
         # TODO update digitalfile mata data with progress
         # TODO keep track of list of PDFs
         # TODO write list of PDFs back to digitalfile meta data
-        # TODO push pdfs to S3
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
