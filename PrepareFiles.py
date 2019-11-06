@@ -32,10 +32,12 @@ class Replica:
 
     def process_files(self, delivery_type, max_deliveryfile_size, reference):
         # TODO Code the ZIP case. Can any of the PDF case be generalised?
+        status = False
         if delivery_type == "pdf":
-            self._create_pdf(max_deliveryfile_size, reference)
+            status = self._create_pdf(max_deliveryfile_size, reference)
         # else:
         #     create_zip(cal_avg_size)
+        return status
 
     def _create_image_list(self, max_deliveryfile_size, data):
         output_file_list = []
@@ -89,6 +91,8 @@ class Replica:
                 Bucket=PreparedFiles_config.S3_BUCKET_NAME,
                 Key="test-"+output_name
             )
+        # TODO workout what success looks like and return success for fail
+        return {"code":200}
 
     def _create_file_name_prefix(self, reference):
         name = reference.replace(" ", "-")
