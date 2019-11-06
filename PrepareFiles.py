@@ -138,5 +138,6 @@ class Replica:
 
     def _write_text_to_image(self, image_object, reference, font):
         draw = ImageDraw.Draw(image_object)
-        draw.text((4, 2), 'The National Archives reference ' + reference + ' - © Crown Copyright', (0, 0, 0), font)
+        text = 'The National Archives reference ' + reference + '  -  © Crown Copyright'
+        draw.text((4, 2), text, (0, 0, 0), font)
         return image_object
