@@ -1,5 +1,6 @@
 import unittest
 import json
+from PIL import Image
 import PrepareFiles
 
 data = '{ "Iaid": "C7351413", "ReplicaId": "769c283b-1676-4eb6-a85b-63c7e6eb5272", "Reference": "WO 95/1105/1", "FileExtension": "pdf", "MaxDeliverySize": 46925 }'
@@ -80,3 +81,12 @@ class TestMethods(unittest.TestCase):
                                    '66/DEFE/24/2A9B2164-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2ADDFE44-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2B2861A0-4D5A-11E8-BACD-B7E50F03B1FA.jpg']])
+
+    def test_compose_canvas(self):
+        replica = PrepareFiles.Replica(data)
+        image_object = Image.open('tree.jpg')
+        target_size = (replica._calculate_im_size(image_object.size))
+        image_object.thumbnail(target_size, Image.ANTIALIAS)
+        canvas = replica._compose_canvas(image_object)
+        canvas.save('output.jpg')
+        self.assertEqual(canvas.size, (1191, 842))
