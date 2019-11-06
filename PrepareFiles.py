@@ -76,9 +76,8 @@ class Replica:
                 if image_object.mode == "RGBA":
                     image_object = image_object.convert("RGB")
                 canvas = self._compose_canvas(image_object)
-                draw = ImageDraw.Draw(canvas)
-                draw.text((4, 2), 'The National Archives reference ' + reference + '       © Crown Copyright', (0, 0, 0), font)
-                images.append(canvas)
+                canvas_with_text = self._write_text_to_image(canvas, reference, font)
+                images.append(canvas_with_text)
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             print(output_name)
             n += 1
@@ -136,3 +135,8 @@ class Replica:
         y1 = int(math.floor((canvas_height - image_height) / 2))
         canvas.paste(image_object, (x1, y1, x1 + image_width, y1 + image_height))
         return canvas
+
+    def _write_text_to_image(self, image_object, reference, font):
+        draw = ImageDraw.Draw(image_object)
+        draw.text((4, 2), 'The National Archives reference ' + reference + ' - © Crown Copyright', (0, 0, 0), font)
+        return image_object
