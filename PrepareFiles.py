@@ -59,7 +59,6 @@ class Replica:
         # TODO update digitalfile mata data with progress
         # TODO keep track of list of PDFs
         # TODO write list of PDFs back to digitalfile meta data
-        # TODO push pdfs to S3
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
@@ -76,13 +75,13 @@ class Replica:
                 if image_object.mode == "RGBA":
                     image_object = image_object.convert("RGB")
                 canvas = self._compose_canvas(image_object)
-                draw = ImageDraw.Draw(canvas)
-                draw.text((4, 2), 'The National Archives reference ' + reference + '       © Crown Copyright', (0, 0, 0), font)
-                images.append(canvas)
+                canvas_with_text = self._write_text_to_image(canvas, reference, font)
+                images.append(canvas_with_text)
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             print(output_name)
             n += 1
             images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
+            # TODO check file has successfully uploaded to s3 and then delete local file
             r = s3_client.put_object(
                 ACL='public-read',
                 Body=open(output_name, 'rb'),
@@ -136,3 +135,9 @@ class Replica:
         y1 = int(math.floor((canvas_height - image_height) / 2))
         canvas.paste(image_object, (x1, y1, x1 + image_width, y1 + image_height))
         return canvas
+
+    def _write_text_to_image(self, image_object, reference, font):
+        draw = ImageDraw.Draw(image_object)
+        text = 'The National Archives reference ' + reference + '  -  © Crown Copyright'
+        draw.text((4, 2), text, (0, 0, 0), font)
+        return image_object
