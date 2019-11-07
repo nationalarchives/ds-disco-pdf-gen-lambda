@@ -1,14 +1,13 @@
 import math
+import os
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
 import json
 import boto3
 from io import BytesIO
-import PreparedFiles_config
 
-session = boto3.session.Session(profile_name='intersiteadmin')
-s3_client = session.client('s3')
+s3_client = boto3.client('s3')
 
 
 def get_input_variables(data):
@@ -88,7 +87,7 @@ class Replica:
                 ACL='public-read',
                 Body=open(output_name, 'rb'),
                 ContentType='application/pdf',
-                Bucket=PreparedFiles_config.S3_BUCKET_NAME,
+                Bucket=os.environ['S3_BUCKET_NAME'],
                 Key="test-"+output_name
             )
         # TODO workout what success looks like and return success for fail
