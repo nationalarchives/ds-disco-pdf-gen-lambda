@@ -13,31 +13,31 @@ class TestMethods(unittest.TestCase):
         replica = PrepareFiles.Replica(data)
         # Test image size 2475x3504
         size = (replica._calculate_im_size((2475, 3504)))
-        self.assertEqual(size, (781.207191780822, 1106))
+        self.assertEqual(size, (805.9289383561643, 1141))
 
     def test_calculate_im_size_landscape(self):
         replica = PrepareFiles.Replica(data)
         # Test image size 3504x2475
         size = (replica._calculate_im_size((3504, 2475)))
-        self.assertEqual(size, (1106, 781.207191780822))
+        self.assertEqual(size, (1141, 805.9289383561643))
 
     def test_calculate_im_size_square(self):
         replica = PrepareFiles.Replica(data)
         # Test image size 2475x2475
         size = (replica._calculate_im_size((2475, 2475)))
-        self.assertEqual(size, (782, 782))
+        self.assertEqual(size, (807, 807))
 
     def test_calculate_im_size_high(self):
         replica = PrepareFiles.Replica(data)
         # Test image size 1000x2475
         size = (replica._calculate_im_size((1000, 2475)))
-        self.assertEqual(size, (446.86868686868684, 1106))
+        self.assertEqual(size, (461.01010101010104, 1141))
 
     def test_calculate_im_size_wide(self):
         replica = PrepareFiles.Replica(data)
         # Test image size 3500x1475
         size = (replica._calculate_im_size((3500, 1475)))
-        self.assertEqual(size, (1106, 466.1))
+        self.assertEqual(size, (1141, 480.85))
 
     def test_create_file_name_prefix(self):
         replica = PrepareFiles.Replica(data)

@@ -7,7 +7,8 @@ import json
 import boto3
 from io import BytesIO
 
-s3_client = boto3.client('s3')
+session = boto3.session.Session(profile_name='intersiteadmin')
+s3_client = session.client('s3')
 
 
 def get_input_variables(data):
@@ -100,8 +101,8 @@ class Replica:
 
     def _calculate_im_size(self, size):
         width, height = size
-        max_long_edge = 1106
-        max_short_edge = 782
+        max_long_edge = 1141
+        max_short_edge = 807
         if width < height:
             # Portrait
             ratio = width / height

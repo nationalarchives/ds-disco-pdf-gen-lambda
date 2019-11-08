@@ -1,5 +1,4 @@
 import PrepareFiles
-import json
 
 
 def prepare_files(event, context):
