@@ -19,7 +19,7 @@ def get_input_variables(data):
 
 def get_replica(rid):
     # TODO Interface with the DigitalMetadataAPI to fetch a real replica here
-    with open('tests/response.json') as content_file:
+    with open('response.json') as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
@@ -63,7 +63,7 @@ class Replica:
         # TODO write list of PDFs back to digitalfile meta data
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
-        font = ImageFont.truetype('./font/Arial.ttf', 16)
+        font = ImageFont.truetype('Arial.ttf', 16)
         images = []
         n = 1
         for batch in batch_list:
