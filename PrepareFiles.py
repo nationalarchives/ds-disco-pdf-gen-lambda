@@ -6,9 +6,19 @@ from PIL import ImageDraw
 import json
 import boto3
 from io import BytesIO
+import PreparedFiles_config
 
 session = boto3.session.Session(profile_name='intersiteadmin')
 s3_client = session.client('s3')
+
+if "S3_BUCKET_NAME_GET" in os.environ:
+    s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
+else:
+    s3_bucket_get = PreparedFiles_config.S3_BUCKET_NAME_GET
+if "S3_BUCKET_NAME_PUT" in os.environ:
+    s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
+else:
+    s3_bucket_put = PreparedFiles_config.S3_BUCKET_NAME_PUT
 
 
 def get_input_variables(data):
@@ -69,7 +79,7 @@ class Replica:
         for batch in batch_list:
             for image_key in batch:
                 print(image_key)
-                s3_obj = s3_client.get_object(Bucket='tna-digital-files', Key=image_key)
+                s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
                 image_bytes = s3_obj['Body'].read()
                 image_object = Image.open(BytesIO(image_bytes))
                 target_size = (self._calculate_im_size(image_object.size))
@@ -88,7 +98,7 @@ class Replica:
                 ACL='public-read',
                 Body=open(output_name, 'rb'),
                 ContentType='application/pdf',
-                Bucket=os.environ['S3_BUCKET_NAME'],
+                Bucket=s3_bucket_put,
                 Key="test-"+output_name
             )
         # TODO workout what success looks like and return success for fail
