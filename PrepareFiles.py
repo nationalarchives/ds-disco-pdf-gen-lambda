@@ -63,7 +63,7 @@ class Replica:
         # TODO write list of PDFs back to digitalfile meta data
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
-        font = ImageFont.truetype('Arial.ttf', 16)
+        font = ImageFont.truetype('./font/Arial.ttf', 16)
         images = []
         n = 1
         for batch in batch_list:
