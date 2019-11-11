@@ -1,6 +1,6 @@
 # ds-disco-pdf-gen-lambda
 
-## Prepare and package Pillow dependencies
+## Package Pillow dependencies with function code
 
 Launch an EC2 with the AMI – amzn-ami-hvm-2018.03.0.20181129-x86_64-gp2 to install and package Pillow.
 
@@ -31,6 +31,9 @@ zip -r9 ${OLDPWD}/function.zip .
 scp -i key-pair-name].pem ec2-user@[public-dns]:/home/ec2-user/function.zip ~/Desktop/
 ```
 
+Finally, add the function code and files to the Pillow package zip.
+
 ## References
 
 * https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+* https://docs.aws.amazon.com/lambda/latest/dg/lambda-python-how-to-create-deployment-package.html#python-package-dependencies
