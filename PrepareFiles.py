@@ -21,12 +21,6 @@ else:
     s3_bucket_put = PreparedFiles_config.S3_BUCKET_NAME_PUT
 
 
-def get_input_variables(data):
-    # TODO Interface with SQS here to get the real input data
-    list = json.loads(data)
-    return list
-
-
 def get_replica(rid):
     # TODO Interface with the DigitalMetadataAPI to fetch a real replica here
     with open('response.json') as content_file:
