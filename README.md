@@ -13,7 +13,7 @@ sudo yum update
 sudo yum list | grep python3
 sudo yum install python36 python36-pip
 curl -O https://bootstrap.pypa.io/get-pip.py
-ppython3 get-pip.py --user
+python3 get-pip.py --user
 
 # Install Pillow
 pip3 install Pillow --user
