@@ -20,10 +20,14 @@ if "S3_BUCKET_NAME_PUT" in os.environ:
     s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
 else:
     s3_bucket_put = PreparedFiles_config.S3_BUCKET_NAME_PUT
+if "Digital_MetaData_API" in os.environ:
+    metadata_api = os.environ['Digital_MetaData_API']
+else:
+    metadata_api = PreparedFiles_config.Digital_MetaData_API
 
 
 def get_replica(rid):
-    with urllib.request.urlopen(PreparedFiles_config.api+rid) as content_file:
+    with urllib.request.urlopen(metadata_api+rid) as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
@@ -83,7 +87,7 @@ class Replica:
                 canvas = self._compose_canvas(image_object)
                 canvas_with_text = self._write_text_to_image(canvas, reference, font)
                 images.append(canvas_with_text)
-            output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
+            output_name = '/tmp/' + output_name_prefix + '{:02d}'.format(n) + '.pdf'
             print(output_name)
             n += 1
             images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
