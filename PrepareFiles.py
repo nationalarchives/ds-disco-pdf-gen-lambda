@@ -7,6 +7,7 @@ import json
 import boto3
 from io import BytesIO
 import PreparedFiles_config
+import urllib
 
 session = boto3.session.Session(profile_name='intersiteadmin')
 s3_client = session.client('s3')
@@ -22,8 +23,8 @@ else:
 
 
 def get_replica(rid):
-    # TODO Interface with the DigitalMetadataAPI to fetch a real replica here
-    with open('response.json') as content_file:
+    api = 'http://discovery-services.dev.local/DigitalMetaDataAPI/replicas/'
+    with urllib.request.urlopen(api+rid) as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
