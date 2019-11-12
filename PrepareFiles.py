@@ -23,8 +23,7 @@ else:
 
 
 def get_replica(rid):
-    api = 'http://discovery-services.dev.local/DigitalMetaDataAPI/replicas/'
-    with urllib.request.urlopen(api+rid) as content_file:
+    with urllib.request.urlopen(PreparedFiles_config.api+rid) as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
