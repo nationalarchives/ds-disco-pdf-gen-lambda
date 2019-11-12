@@ -5,6 +5,7 @@ from PIL import ImageFont
 from PIL import ImageDraw
 import json
 import boto3
+from botocore.exceptions import ClientError
 from io import BytesIO
 import PreparedFiles_config
 import urllib
@@ -87,18 +88,20 @@ class Replica:
                 canvas = self._compose_canvas(image_object)
                 canvas_with_text = self._write_text_to_image(canvas, reference, font)
                 images.append(canvas_with_text)
-            output_name = '/tmp/' + output_name_prefix + '{:02d}'.format(n) + '.pdf'
+            tmp_path = '/tmp/'
+            output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             print(output_name)
             n += 1
-            images[0].save(output_name, save_all=True, quality=100, append_images=images[1:])
-            # TODO check file has successfully uploaded to s3 and then delete local file
+            images[0].save(tmp_path+output_name, save_all=True, quality=100, append_images=images[1:])
             r = s3_client.put_object(
                 ACL='public-read',
-                Body=open(output_name, 'rb'),
+                Body=open(tmp_path+output_name, 'rb'),
                 ContentType='application/pdf',
                 Bucket=s3_bucket_put,
-                Key="test-"+output_name
+                Key='test/'+output_name
             )
+            if self._check_s3(s3_bucket_put, 'test/'+output_name) == True:
+                os.remove(tmp_path + output_name)
         # TODO workout what success looks like and return success for fail
         return {"code":200}
 
@@ -153,3 +156,10 @@ class Replica:
         text = 'The National Archives reference ' + reference + '  -  © Crown Copyright'
         draw.text((4, 2), text, (0, 0, 0), font)
         return image_object
+
+    def _check_s3(self, bucket, key):
+        try:
+            s3_client.head_object(Bucket=bucket, Key=key)
+        except ClientError as e:
+            return int(e.response['Error']['Code']) != 404
+        return True
