@@ -1,30 +1,19 @@
 import math
 import os
+import urllib
+import json
+import boto3
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
-import json
-import boto3
-from botocore.exceptions import ClientError
 from io import BytesIO
-import PreparedFiles_config
-import urllib
+from botocore.exceptions import ClientError
 
-session = boto3.session.Session(profile_name='intersiteadmin')
-s3_client = session.client('s3')
+s3_client = boto3.client('s3')
 
-if "S3_BUCKET_NAME_GET" in os.environ:
-    s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
-else:
-    s3_bucket_get = PreparedFiles_config.S3_BUCKET_NAME_GET
-if "S3_BUCKET_NAME_PUT" in os.environ:
-    s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
-else:
-    s3_bucket_put = PreparedFiles_config.S3_BUCKET_NAME_PUT
-if "Digital_MetaData_API" in os.environ:
-    metadata_api = os.environ['Digital_MetaData_API']
-else:
-    metadata_api = PreparedFiles_config.Digital_MetaData_API
+s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
+s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
+metadata_api = os.environ['DIGITAL_METADATA_API']
 
 
 def get_replica(rid):
@@ -77,7 +66,6 @@ class Replica:
         n = 1
         for batch in batch_list:
             for image_key in batch:
-                print(image_key)
                 s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
                 image_bytes = s3_obj['Body'].read()
                 image_object = Image.open(BytesIO(image_bytes))
@@ -102,7 +90,8 @@ class Replica:
             )
             if self._check_s3(s3_bucket_put, 'test/'+output_name) == True:
                 os.remove(tmp_path + output_name)
-        # TODO workout what success looks like and return success for fail
+                images = []
+        # TODO workout what success looks like and return success for fail - if fail push SQS messsage back to SQS - if image doesn't exist log missing image and message in Cloudwatch
         return {"code":200}
 
     def _create_file_name_prefix(self, reference):
