@@ -66,6 +66,7 @@ class Replica:
         n = 1
         parts = []
         total_parts = len(batch_list)
+        count_images = 0
         for batch in batch_list:
             for image_key in batch:
                 s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
@@ -91,6 +92,10 @@ class Replica:
                 Key='test/' + output_name
             )
             if self._check_s3(s3_bucket_put, 'test/' + output_name) == True:
+                total_batch_images = len(batch)
+                from_image = count_images + 1
+                to_image = count_images + total_batch_images
+                count_images = to_image
                 part = '{ "FileName": "' + output_name + '", "FromImage": ' + from_image + ', "ToImage": ' + to_image + ', "ContentType" : "application/pdf" }'
                 parts.append(part)
                 percentage = len(parts) * (total_parts / 100)
