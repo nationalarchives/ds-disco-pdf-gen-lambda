@@ -28,11 +28,11 @@ class Replica:
     def __init__(self, content):
         self.replica_data = content
 
-    def process_files(self, delivery_type, max_deliveryfile_size, reference):
+    def process_files(self, delivery_type, max_deliveryfile_size, reference, iaid):
         # TODO Code the ZIP case. Can any of the PDF case be generalised?
         status = False
         if delivery_type == "pdf":
-            status = self._create_pdf(max_deliveryfile_size, reference)
+            status = self._create_pdf(max_deliveryfile_size, reference, iaid)
         # else:
         #     create_zip(cal_avg_size)
         return status
@@ -55,7 +55,7 @@ class Replica:
             count += 1
         return output_file_list
 
-    def _create_pdf(self, max_deliveryfile_size, reference):
+    def _create_pdf(self, max_deliveryfile_size, reference, iaid):
         # TODO update digitalfile mata data with progress
         # TODO keep track of list of PDFs
         # TODO write list of PDFs back to digitalfile meta data
@@ -64,6 +64,8 @@ class Replica:
         font = ImageFont.truetype('./font/Arial.ttf', 16)
         images = []
         n = 1
+        parts = []
+        total_parts = len(batch_list)
         for batch in batch_list:
             for image_key in batch:
                 s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
@@ -89,6 +91,10 @@ class Replica:
                 Key='test/' + output_name
             )
             if self._check_s3(s3_bucket_put, 'test/' + output_name) == True:
+                part = '{ "FileName": "' + output_name + '", "FromImage": ' + from_image + ', "ToImage": ' + to_image + ', "ContentType" : "application/pdf" }'
+                parts.append(part)
+                percentage = len(parts) * (total_parts / 100)
+                send = self._post_progress(iaid, percentage, parts)
                 os.remove(tmp_path + output_name)
                 images = []
         # TODO workout what success looks like and return success for fail - if fail push SQS messsage back to SQS - if image doesn't exist log missing image and message in Cloudwatch
@@ -153,8 +159,9 @@ class Replica:
             return int(e.response['Error']['Code']) != 404
         return True
 
+
     def _post_progress(self, iaid, percentage, parts):
-        data = '{ "Iaid": "' + iaid + '", "PercentCompleted": ' + percentage + ', "Parts": [' + parts + '] }'
+        data = '{ "Iaid": "' + iaid + '", "PercentCompleted": ' + percentage + ', "Parts": ' + parts + ' }'
         api = metadata_api + 'preparedfile/' + iaid
         try:
             params = json.dumps(data).encode('utf8')
