@@ -9,11 +9,26 @@ from PIL import ImageDraw
 from io import BytesIO
 from botocore.exceptions import ClientError
 
-s3_client = boto3.client('s3')
-
 s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
 s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
 metadata_api = os.environ['DIGITAL_METADATA_API']
+role_arn = os.environ['ROLE_ARN']
+
+client = boto3.client('sts')
+sts_response = client.assume_role(
+    RoleArn=role_arn,
+    RoleSessionName='cross_acct_lambda',
+    DurationSeconds=900
+)
+ACCESS_KEY = sts_response['Credentials']['AccessKeyId']
+SECRET_KEY = sts_response['Credentials']['SecretAccessKey']
+SESSION_TOKEN = sts_response['Credentials']['SessionToken']
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY,
+    aws_session_token=SESSION_TOKEN
+)
 
 
 def get_replica(rid):
@@ -163,7 +178,6 @@ class Replica:
         except ClientError as e:
             return int(e.response['Error']['Code']) != 404
         return True
-
 
     def _post_progress(self, iaid, percentage, parts):
         data = '{ "Iaid": "' + iaid + '", "PercentCompleted": ' + percentage + ', "Parts": ' + parts + ' }'
