@@ -17,7 +17,7 @@ metadata_api = os.environ['DIGITAL_METADATA_API']
 
 
 def get_replica(rid):
-    with urllib.request.urlopen(metadata_api+rid) as content_file:
+    with urllib.request.urlopen(metadata_api + 'replicas/' + rid) as content_file:
         json_content = content_file.read()
     content = json.loads(json_content)
     replica = Replica(content)
@@ -25,7 +25,7 @@ def get_replica(rid):
 
 
 class Replica:
-    def __init__( self, content ):
+    def __init__(self, content):
         self.replica_data = content
 
     def process_files(self, delivery_type, max_deliveryfile_size, reference):
@@ -80,19 +80,19 @@ class Replica:
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             print(output_name)
             n += 1
-            images[0].save(tmp_path+output_name, save_all=True, quality=100, append_images=images[1:])
+            images[0].save(tmp_path + output_name, save_all=True, quality=100, append_images=images[1:])
             r = s3_client.put_object(
                 ACL='public-read',
-                Body=open(tmp_path+output_name, 'rb'),
+                Body=open(tmp_path + output_name, 'rb'),
                 ContentType='application/pdf',
                 Bucket=s3_bucket_put,
-                Key='test/'+output_name
+                Key='test/' + output_name
             )
-            if self._check_s3(s3_bucket_put, 'test/'+output_name) == True:
+            if self._check_s3(s3_bucket_put, 'test/' + output_name) == True:
                 os.remove(tmp_path + output_name)
                 images = []
         # TODO workout what success looks like and return success for fail - if fail push SQS messsage back to SQS - if image doesn't exist log missing image and message in Cloudwatch
-        return {"code":200}
+        return {"code": 200}
 
     def _create_file_name_prefix(self, reference):
         name = reference.replace(" ", "-")
@@ -123,7 +123,7 @@ class Replica:
                 new_width = new_height / height * width
         return new_width, new_height
 
-    def _compose_canvas(self,image_object):
+    def _compose_canvas(self, image_object):
         image_width, image_height = image_object.size
         canvas_width = 0
         canvas_height = 0
@@ -152,3 +152,14 @@ class Replica:
         except ClientError as e:
             return int(e.response['Error']['Code']) != 404
         return True
+
+    def _post_progress(self, iaid, percentage, parts):
+        data = '{ "Iaid": "' + iaid + '", "PercentCompleted": ' + percentage + ', "Parts": [' + parts + '] }'
+        api = metadata_api + 'preparedfile/' + iaid
+        try:
+            params = json.dumps(data).encode('utf8')
+            req = urllib.request.Request(api, data=params, headers={'Content-Type': 'application/json'})
+            response = urllib.request.urlopen(req)
+            return True
+        except:
+            return False
