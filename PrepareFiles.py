@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError
 s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
 s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
 metadata_api = os.environ['DIGITAL_METADATA_API']
-role_arn = os.environ['ROLE_ARN']
+role_arn = os.environ['S3_CROSS_ACCOUNT_ROLE_ARN']
 
 client = boto3.client('sts')
 sts_response = client.assume_role(
@@ -95,25 +95,20 @@ class Replica:
                 images.append(canvas_with_text)
             tmp_path = '/tmp/'
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
-            print(output_name)
             n += 1
             images[0].save(tmp_path + output_name, save_all=True, quality=100, append_images=images[1:])
-            r = s3_client.put_object(
-                ACL='public-read',
-                Body=open(tmp_path + output_name, 'rb'),
-                ContentType='application/pdf',
-                Bucket=s3_bucket_put,
-                Key='test/' + output_name
-            )
-            if self._check_s3(s3_bucket_put, 'test/' + output_name) == True:
+            success = self._s3_put_object(s3_bucket_put, tmp_path + output_name, 'test/' + output_name)
+            if success:
+                print('Successfully pushed to s3: ' + output_name)
+            if self._check_s3(s3_bucket_put, 'test/' + output_name):
                 total_parts = len(batch_list)
                 total_batch_images = len(batch)
                 from_image = count_images + 1
                 to_image = count_images + total_batch_images
                 count_images = to_image
-                part = '{ "FileName": "' + output_name + '", "FromImage": ' + from_image + ', "ToImage": ' + to_image + ', "ContentType" : "application/pdf" }'
+                part = {"FileName": output_name, "FromImage": from_image, "ToImage": to_image, "ContentType": "application/pdf"}
                 parts.append(part)
-                percentage = len(parts) * (total_parts / 100)
+                percentage = round((100 / total_parts) * len(parts))
                 send = self._post_progress(iaid, percentage, parts)
                 os.remove(tmp_path + output_name)
                 images = []
@@ -189,3 +184,18 @@ class Replica:
             return True
         except:
             return False
+
+    def _s3_put_object(self, bucket_name, src_data, object_key):
+        try:
+            s3_client.put_object(
+                ACL='public-read',
+                Bucket=bucket_name,
+                Body=open(src_data, 'rb'),
+                Key=object_key
+            )
+        except ClientError as e:
+            print(e)
+            return False
+        return True
+
+
