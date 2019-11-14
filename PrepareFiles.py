@@ -71,9 +71,7 @@ class Replica:
         return output_file_list
 
     def _create_pdf(self, max_deliveryfile_size, reference, iaid):
-        # TODO update digitalfile mata data with progress
-        # TODO keep track of list of PDFs
-        # TODO write list of PDFs back to digitalfile meta data
+        # TODO confirm write list of PDFs back to digitalfile meta data
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
@@ -99,8 +97,7 @@ class Replica:
             images[0].save(tmp_path + output_name, save_all=True, quality=100, append_images=images[1:])
             success = self._s3_put_object(s3_bucket_put, tmp_path + output_name, 'test/' + output_name)
             if success:
-                print('Successfully pushed to s3: ' + output_name)
-            if self._check_s3(s3_bucket_put, 'test/' + output_name):
+                print('Successfully uploaded to s3: ' + output_name)
                 total_parts = len(batch_list)
                 total_batch_images = len(batch)
                 from_image = count_images + 1
@@ -110,9 +107,19 @@ class Replica:
                 parts.append(part)
                 percentage = round((100 / total_parts) * len(parts))
                 send = self._post_progress(iaid, percentage, parts)
+                if send:
+                    progress = str(percentage) + '% progress sent'
+                    print(progress)
+                    print(parts)
+                else:
+                    print('Progress failed')
                 os.remove(tmp_path + output_name)
                 images = []
-        # TODO workout what success looks like and return success for fail - if fail push SQS messsage back to SQS - if image doesn't exist log missing image and message in Cloudwatch
+            else:
+                print('Failed to upload to s3: ' + output_name)
+                pass
+        # TODO workout what success looks like, if image doesn't exist log missing image and message in Cloudwatch
+        # TODO report success to SQS (remove message)
         return {"code": 200}
 
     def _create_file_name_prefix(self, reference):
@@ -189,15 +196,16 @@ class Replica:
         return True
 
     def _post_progress(self, iaid, percentage, parts):
-        data = '{ "Iaid": "' + iaid + '", "PercentCompleted": ' + percentage + ', "Parts": ' + parts + ' }'
-        api = metadata_api + 'preparedfile/' + iaid
+        data = {"Iaid": iaid, "PercentCompleted": percentage, "Parts": parts}
+        api = metadata_api + 'preparedfile'
         try:
             params = json.dumps(data).encode('utf8')
-            req = urllib.request.Request(api, data=params, headers={'Content-Type': 'application/json'})
+            req = urllib.request.Request(api, data=params, headers={'Content-Type': 'application/json'}, method='POST')
             response = urllib.request.urlopen(req)
-            return True
-        except:
+        except Exception as ex:
+            print(ex)
             return False
+        return True
 
 
 
