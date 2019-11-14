@@ -167,11 +167,25 @@ class Replica:
         draw.text((4, 2), text, (0, 0, 0), font)
         return image_object
 
-    def _check_s3(self, bucket, key):
+    def _s3_put_object(self, bucket_name, src_data, object_key):
         try:
-            s3_client.head_object(Bucket=bucket, Key=key)
+            s3_client.put_object(
+                ACL='public-read',
+                Bucket=bucket_name,
+                Body=open(src_data, 'rb'),
+                Key=object_key
+            )
         except ClientError as e:
-            return int(e.response['Error']['Code']) != 404
+            print(e)
+            return False
+        return True
+
+    def _check_s3(self, bucket_name, object_key):
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=object_key)
+        except ClientError as e:
+            print(e)
+            return False
         return True
 
     def _post_progress(self, iaid, percentage, parts):
@@ -185,17 +199,6 @@ class Replica:
         except:
             return False
 
-    def _s3_put_object(self, bucket_name, src_data, object_key):
-        try:
-            s3_client.put_object(
-                ACL='public-read',
-                Bucket=bucket_name,
-                Body=open(src_data, 'rb'),
-                Key=object_key
-            )
-        except ClientError as e:
-            print(e)
-            return False
-        return True
+
 
 
