@@ -90,13 +90,9 @@ class Replica:
             print('Progress reporting failed')
         for batch in batch_list:
             for image_key in batch:
-                s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
-                image_bytes = s3_obj['Body'].read()
-                image_object = Image.open(BytesIO(image_bytes))
+                image_object = self._get_image(s3_bucket_get, image_key)
                 target_size = (self._calculate_im_size(image_object.size))
                 image_object.thumbnail(target_size, Image.ANTIALIAS)
-                if image_object.mode == "RGBA":
-                    image_object = image_object.convert("RGB")
                 canvas = self._compose_canvas(image_object)
                 canvas_with_text = self._write_text_to_image(canvas, reference, font)
                 images.append(canvas_with_text)
@@ -180,6 +176,18 @@ class Replica:
         draw = ImageDraw.Draw(image_object)
         text = 'The National Archives reference ' + reference + '  -  © Crown Copyright'
         draw.text((4, 2), text, (0, 0, 0), font)
+        return image_object
+
+    def _get_image(self, s3_bucket_get, image_key):
+        try:
+            s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
+            image_bytes = s3_obj['Body'].read()
+            image_object = Image.open(BytesIO(image_bytes))
+            if image_object.mode == "RGBA":
+                image_object = image_object.convert("RGB")
+        except ClientError as e:
+            print(e)
+            return False
         return image_object
 
     def _s3_put_object(self, bucket_name, src_data, object_key):
