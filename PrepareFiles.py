@@ -9,26 +9,31 @@ from PIL import ImageDraw
 from io import BytesIO
 from botocore.exceptions import ClientError
 
-s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
-s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
-metadata_api = os.environ['DIGITAL_METADATA_API']
-role_arn = os.environ['S3_CROSS_ACCOUNT_ROLE_ARN']
-
-client = boto3.client('sts')
-sts_response = client.assume_role(
-    RoleArn=role_arn,
-    RoleSessionName='cross_acct_lambda',
-    DurationSeconds=900
-)
-ACCESS_KEY = sts_response['Credentials']['AccessKeyId']
-SECRET_KEY = sts_response['Credentials']['SecretAccessKey']
-SESSION_TOKEN = sts_response['Credentials']['SessionToken']
-s3_client = boto3.client(
-    's3',
-    aws_access_key_id=ACCESS_KEY,
-    aws_secret_access_key=SECRET_KEY,
-    aws_session_token=SESSION_TOKEN
-)
+if "DIGITAL_METADATA_API" in os.environ:
+    s3_bucket_get = os.environ['S3_BUCKET_NAME_GET']
+    s3_bucket_put = os.environ['S3_BUCKET_NAME_PUT']
+    metadata_api = os.environ['DIGITAL_METADATA_API']
+    role_arn = os.environ['S3_CROSS_ACCOUNT_ROLE_ARN']
+    client = boto3.client('sts')
+    sts_response = client.assume_role(
+        RoleArn=role_arn,
+        RoleSessionName='cross_acct_lambda',
+        DurationSeconds=900
+    )
+    ACCESS_KEY = sts_response['Credentials']['AccessKeyId']
+    SECRET_KEY = sts_response['Credentials']['SecretAccessKey']
+    SESSION_TOKEN = sts_response['Credentials']['SessionToken']
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_KEY,
+        aws_session_token=SESSION_TOKEN
+    )
+else:
+    s3_bucket_get = 0
+    s3_bucket_put = 0
+    metadata_api = 0
+    role_arn = 0
 
 
 def get_replica(rid):
@@ -71,7 +76,6 @@ class Replica:
         return output_file_list
 
     def _create_pdf(self, max_deliveryfile_size, reference, iaid):
-        # TODO confirm write list of PDFs back to digitalfile meta data
         batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
@@ -79,6 +83,11 @@ class Replica:
         n = 1
         parts = []
         count_images = 0
+        start = self._post_progress(iaid, 1)
+        if start:
+            print('Progress reporting started')
+        else:
+            print('Progress reporting failed')
         for batch in batch_list:
             for image_key in batch:
                 s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
@@ -108,11 +117,10 @@ class Replica:
                 percentage = round((100 / total_parts) * len(parts))
                 send = self._post_progress(iaid, percentage, parts)
                 if send:
-                    progress = str(percentage) + '% progress sent'
+                    progress = str(percentage) + '% progress'
                     print(progress)
-                    print(parts)
                 else:
-                    print('Progress failed')
+                    print('Progress reporting failed')
                 os.remove(tmp_path + output_name)
                 images = []
             else:
@@ -195,8 +203,11 @@ class Replica:
             return False
         return True
 
-    def _post_progress(self, iaid, percentage, parts):
-        data = {"Iaid": iaid, "PercentCompleted": percentage, "Parts": parts}
+    def _post_progress(self, iaid, percentage, parts=None):
+        if parts is None:
+            data = {"Iaid": iaid, "PercentCompleted": percentage}
+        else:
+            data = {"Iaid": iaid, "PercentCompleted": percentage, "Parts": parts}
         api = metadata_api + 'preparedfile'
         try:
             params = json.dumps(data).encode('utf8')
@@ -206,7 +217,3 @@ class Replica:
             print(ex)
             return False
         return True
-
-
-
-
