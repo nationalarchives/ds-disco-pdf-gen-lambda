@@ -91,11 +91,16 @@ class Replica:
         for batch in batch_list:
             for image_key in batch:
                 image_object = self._get_image(s3_bucket_get, image_key)
-                target_size = (self._calculate_im_size(image_object.size))
-                image_object.thumbnail(target_size, Image.ANTIALIAS)
-                canvas = self._compose_canvas(image_object)
-                canvas_with_text = self._write_text_to_image(canvas, reference, font)
-                images.append(canvas_with_text)
+                if image_object:
+                    target_size = (self._calculate_im_size(image_object.size))
+                    image_object.thumbnail(target_size, Image.ANTIALIAS)
+                    canvas = self._compose_canvas(image_object)
+                    canvas_with_text = self._write_text_to_image(canvas, reference, font)
+                    images.append(canvas_with_text)
+                else:
+                    # TODO setup a Cloudwatch metric to identify this error and send an email to discovery@nationalarchives.gov.uk
+                    print('Failed to retrieve image from s3 (404 NoSuchKey): ' + image_key)
+                    break
             tmp_path = '/tmp/'
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             n += 1
@@ -122,8 +127,6 @@ class Replica:
             else:
                 print('Failed to upload to s3: ' + output_name)
                 pass
-        # TODO workout what success looks like, if image doesn't exist log missing image and message in Cloudwatch
-        # TODO report success to SQS (remove message)
         return {"code": 200}
 
     def _create_file_name_prefix(self, reference):
