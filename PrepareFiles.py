@@ -50,7 +50,6 @@ class Replica:
         self.replica_data = content
 
     def process_files(self, delivery_type, max_deliveryfile_size, reference, iaid):
-        # TODO Code the ZIP case. Can any of the PDF case be generalised?
         status = False
         if delivery_type == "pdf":
             status = self._create_pdf(max_deliveryfile_size, reference, iaid)
@@ -81,6 +80,7 @@ class Replica:
         batch_list = self._create_file_list(max_deliveryfile_size, self.replica_data['files'])
         zipfile_name_prefix = self._create_file_name_prefix(reference)
         n = 1
+        start = self._post_progress(iaid, 1)
         for batch in batch_list:
             output_name = zipfile_name_prefix + '{:02d}'.format(n) + '.zip'
             zip_file = zipfile.ZipFile('/tmp/' + output_name, 'w')
@@ -96,6 +96,7 @@ class Replica:
                         break
             zip_file.close()
             success = self._s3_put_object(s3_bucket_put, '/tmp/' + output_name, 'test/' + output_name)
+            n += 1
         return {"code": 200}
 
     def _create_pdf(self, max_deliveryfile_size, reference, iaid):
