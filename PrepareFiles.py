@@ -3,6 +3,7 @@ import os
 import urllib
 import json
 import boto3
+import zipfile
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
@@ -78,14 +79,23 @@ class Replica:
     def _create_zip(self, max_deliveryfile_size, reference, iaid):
         print(self.replica_data['files'])
         batch_list = self._create_file_list(max_deliveryfile_size, self.replica_data['files'])
+        zipfile_name_prefix = self._create_file_name_prefix(reference)
+        n = 1
         for batch in batch_list:
-            for file_key in batch:
-                file_object = self._get_s3_file(s3_bucket_get, file_key)
-                if file_object:
-                    print(file_key)
-                else:
-                    print('[ERROR 404 NoSuchKey] - Failed to retrieve file from s3: ' + file_key)
-                    break
+            output_name = zipfile_name_prefix + '{:02d}'.format(n) + '.zip'
+            zip_file = zipfile.ZipFile('/tmp/' + output_name, 'w')
+            with zip_file:
+                for file_key in batch:
+                    try:
+                        s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=file_key)
+                        file_data = s3_obj['Body'].read()
+                        zip_file.write(file_data)
+                    except ClientError as e:
+                        print(e)
+                        print('[ERROR 404 NoSuchKey] - Failed to retrieve file from s3: ' + file_key)
+                        break
+            zip_file.close()
+            success = self._s3_put_object(s3_bucket_put, '/tmp/' + output_name, 'test/' + output_name)
         return {"code": 200}
 
     def _create_pdf(self, max_deliveryfile_size, reference, iaid):
@@ -103,7 +113,7 @@ class Replica:
             print('Progress reporting failed')
         for batch in batch_list:
             for image_key in batch:
-                image_object = self._get_s3_file(s3_bucket_get, image_key)
+                image_object = self._get_s3_image(s3_bucket_get, image_key)
                 if image_object:
                     target_size = (self._calculate_im_size(image_object.size))
                     image_object.thumbnail(target_size, Image.ANTIALIAS)
@@ -193,7 +203,7 @@ class Replica:
         draw.text((4, 2), text, (0, 0, 0), font)
         return image_object
 
-    def _get_s3_file(self, s3_bucket_get, image_key):
+    def _get_s3_image(self, s3_bucket_get, image_key):
         try:
             s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
             image_bytes = s3_obj['Body'].read()
