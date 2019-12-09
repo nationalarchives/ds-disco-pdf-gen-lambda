@@ -53,11 +53,11 @@ class Replica:
         status = False
         if delivery_type == "pdf":
             status = self._create_pdf(max_deliveryfile_size, reference, iaid)
-        # else:
-        #     create_zip(cal_avg_size)
+        else:
+            status = self._create_zip(max_deliveryfile_size, reference, iaid)
         return status
 
-    def _create_image_list(self, max_deliveryfile_size, data):
+    def _create_file_list(self, max_deliveryfile_size, data):
         output_file_list = []
         size = 0
         this_pdf = []
@@ -75,8 +75,21 @@ class Replica:
             count += 1
         return output_file_list
 
+    def _create_zip(self, max_deliveryfile_size, reference, iaid):
+        print(self.replica_data['files'])
+        batch_list = self._create_file_list(max_deliveryfile_size, self.replica_data['files'])
+        for batch in batch_list:
+            for file_key in batch:
+                file_object = self._get_s3_file(s3_bucket_get, file_key)
+                if file_object:
+                    print(file_key)
+                else:
+                    print('[ERROR 404 NoSuchKey] - Failed to retrieve file from s3: ' + file_key)
+                    break
+        return {"code": 200}
+
     def _create_pdf(self, max_deliveryfile_size, reference, iaid):
-        batch_list = self._create_image_list(max_deliveryfile_size, self.replica_data['files'])
+        batch_list = self._create_file_list(max_deliveryfile_size, self.replica_data['files'])
         output_name_prefix = self._create_file_name_prefix(reference)
         font = ImageFont.truetype('./font/Arial.ttf', 16)
         images = []
@@ -90,7 +103,7 @@ class Replica:
             print('Progress reporting failed')
         for batch in batch_list:
             for image_key in batch:
-                image_object = self._get_image(s3_bucket_get, image_key)
+                image_object = self._get_s3_file(s3_bucket_get, image_key)
                 if image_object:
                     target_size = (self._calculate_im_size(image_object.size))
                     image_object.thumbnail(target_size, Image.ANTIALIAS)
@@ -98,8 +111,7 @@ class Replica:
                     canvas_with_text = self._write_text_to_image(canvas, reference, font)
                     images.append(canvas_with_text)
                 else:
-                    # TODO setup a Cloudwatch metric to identify this error and send an email to discovery@nationalarchives.gov.uk
-                    print('Failed to retrieve image from s3 (404 NoSuchKey): ' + image_key)
+                    print('[ERROR 404 NoSuchKey] - Failed to retrieve image from s3: ' + image_key)
                     break
             tmp_path = '/tmp/'
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
@@ -181,7 +193,7 @@ class Replica:
         draw.text((4, 2), text, (0, 0, 0), font)
         return image_object
 
-    def _get_image(self, s3_bucket_get, image_key):
+    def _get_s3_file(self, s3_bucket_get, image_key):
         try:
             s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=image_key)
             image_bytes = s3_obj['Body'].read()
