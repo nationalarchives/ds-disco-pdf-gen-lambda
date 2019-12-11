@@ -60,18 +60,25 @@ class Replica:
     def _create_file_list(self, max_deliveryfile_size, data):
         output_file_list = []
         size = 0
-        this_pdf = []
+        this_file = []
         length = len(data)
         count = 1
         for file in data:
-            this_pdf.append(file['name'])
-            size = file['size'] + size
-            if size > max_deliveryfile_size:
-                output_file_list.append(this_pdf)
+            if length == count:
+                this_file.append(file['name'])
+                output_file_list.append(this_file)
+            elif (file['size'] + data[count]['size']) > max_deliveryfile_size:
+                this_file.append(file['name'])
+                output_file_list.append(this_file)
                 size = 0
-                this_pdf = []
-            elif length == count:
-                output_file_list.append(this_pdf)
+                this_file = []
+            else:
+                this_file.append(file['name'])
+                size = file['size'] + size
+                if size > max_deliveryfile_size:
+                    output_file_list.append(this_file)
+                    size = 0
+                    this_file = []
             count += 1
         return output_file_list
 

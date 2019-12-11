@@ -50,7 +50,7 @@ class TestMethods(unittest.TestCase):
             json_content = content_file.read()
         content = json.loads(json_content)
         files = content['files']
-        output = replica._create_image_list(46925, files)
+        output = replica._create_file_list(46925, files)
         self.assertEqual(output, [['66/DEFE/24/23D96610-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/242C63EC-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2476ADD0-4D5A-11E8-BACD-B7E50F03B1FA.jpg']])
@@ -61,7 +61,7 @@ class TestMethods(unittest.TestCase):
             json_content = content_file.read()
         content = json.loads(json_content)
         files = content['files']
-        output = replica._create_image_list(46925, files)
+        output = replica._create_file_list(46925, files)
         self.assertEqual(output, [['66/DEFE/24/23D96610-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/242C63EC-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2476ADD0-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
@@ -89,7 +89,7 @@ class TestMethods(unittest.TestCase):
             json_content = content_file.read()
         content = json.loads(json_content)
         files = content['files']
-        output = replica._create_image_list(46925, files)
+        output = replica._create_file_list(46925, files)
         self.assertEqual(output, [['66/DEFE/24/23D96610-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/242C63EC-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2476ADD0-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
@@ -110,6 +110,16 @@ class TestMethods(unittest.TestCase):
                                   ['66/DEFE/24/2A9B2164-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2ADDFE44-4D5A-11E8-BACD-B7E50F03B1FA.jpg',
                                    '66/DEFE/24/2B2861A0-4D5A-11E8-BACD-B7E50F03B1FA.jpg']])
+
+    def test_create_image_list_xlg_files(self):
+        replica = PrepareFiles.Replica(data)
+        with open('test-xlg-files.json') as content_file:
+            json_content = content_file.read()
+        content = json.loads(json_content)
+        files = content['files']
+        output = replica._create_file_list(46925, files)
+        self.assertEqual(output, [['66/DEFE/24/23D96610-4D5A-11E8-BACD-B7E50F03B1FA.jpg'],
+                                   ['66/DEFE/24/2476ADD0-4D5A-11E8-BACD-B7E50F03B1FA.jpg']])
 
     def test_compose_canvas_landscape(self):
         replica = PrepareFiles.Replica(data)
