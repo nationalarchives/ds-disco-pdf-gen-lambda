@@ -90,13 +90,13 @@ class Replica:
         start = self._post_progress(iaid, 1)
         for batch in batch_list:
             output_name = zipfile_name_prefix + '{:02d}'.format(n) + '.zip'
-            zip_file = zipfile.ZipFile('/tmp/' + output_name, 'w')
-            with zip_file:
+            with zipfile.ZipFile('/tmp/' + output_name, 'w') as zip_file:
                 for file_key in batch:
                     try:
-                        s3_obj = s3_client.get_object(Bucket=s3_bucket_get, Key=file_key)
-                        file_data = s3_obj['Body'].read()
-                        zip_file.write(file_data)
+                        file_name = file_key.rpartition('/')[2]
+                        print(file_name)
+                        s3_client.download_file(s3_bucket_get, file_key, '/tmp/' + file_name)
+                        zip_file.write('/tmp/' + file_name)
                     except ClientError as e:
                         print(e)
                         print('[ERROR 404 NoSuchKey] - Failed to retrieve file from s3: ' + file_key)
