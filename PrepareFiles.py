@@ -97,6 +97,7 @@ class Replica:
                         print(file_name)
                         s3_client.download_file(s3_bucket_get, file_key, '/tmp/' + file_name)
                         zip_file.write('/tmp/' + file_name)
+                        os.remove('/tmp/' + file_name)
                     except ClientError as e:
                         print(e)
                         print('[ERROR 404 NoSuchKey] - Failed to retrieve file from s3: ' + file_key)
