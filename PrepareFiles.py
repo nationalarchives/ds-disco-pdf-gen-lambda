@@ -87,7 +87,13 @@ class Replica:
         batch_list = self._create_file_list(max_deliveryfile_size, self.replica_data['files'])
         zipfile_name_prefix = self._create_file_name_prefix(reference)
         n = 1
+        parts = []
+        count_artifacts = 0
         start = self._post_progress(iaid, 1)
+        if start:
+            print('Progress reporting started')
+        else:
+            print('Progress reporting failed')
         for batch in batch_list:
             output_name = zipfile_name_prefix + '{:02d}'.format(n) + '.zip'
             with zipfile.ZipFile('/tmp/' + output_name, 'w') as zip_file:
@@ -104,6 +110,25 @@ class Replica:
                         break
             zip_file.close()
             success = self._s3_put_object(s3_bucket_put, '/tmp/' + output_name, 'test/' + output_name)
+            if success:
+                print('Successfully uploaded to s3: ' + output_name)
+                total_parts = len(batch_list)
+                total_batch_images = len(batch)
+                from_artifact = count_artifacts + 1
+                to_artifact = count_artifacts + total_batch_images
+                count_artifacts = to_artifact
+                part = {"FileName": output_name, "FromImage": from_artifact, "ToImage": to_artifact, "ContentType": "application/pdf"}
+                parts.append(part)
+                percentage = round((100 / total_parts) * len(parts))
+                send = self._post_progress(iaid, percentage, parts)
+                if send:
+                    progress = str(percentage) + '% progress'
+                    print(progress)
+                else:
+                    print('Progress reporting failed')
+            else:
+                print('[ERROR] Failed to upload to s3: ' + output_name)
+                pass
             n += 1
         return {"code": 200}
 
@@ -130,7 +155,7 @@ class Replica:
                     canvas_with_text = self._write_text_to_image(canvas, reference, font)
                     images.append(canvas_with_text)
                 else:
-                    print('[ERROR 404 NoSuchKey] - Failed to retrieve image from s3: ' + image_key)
+                    print('[ERROR 404 NoSuchKey] Failed to retrieve image from s3: ' + image_key)
                     break
             tmp_path = '/tmp/'
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
@@ -156,7 +181,7 @@ class Replica:
                 os.remove(tmp_path + output_name)
                 images = []
             else:
-                print('Failed to upload to s3: ' + output_name)
+                print('[ERROR] Failed to upload to s3: ' + output_name)
                 pass
         return {"code": 200}
 
