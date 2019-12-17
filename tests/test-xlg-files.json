@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "checkSum": "MD5:dc1684c6be24c37454d020f2516b9a5e",
+      "format": "jpg",
+      "name": "66/DEFE/24/23D96610-4D5A-11E8-BACD-B7E50F03B1FA.jpg",
+      "originalName": null,
+      "size": 45925
+    },
+    {
+      "checkSum": "MD5:40dcba263493c19021ee9e61bfc674bd",
+      "format": "jpg",
+      "name": "66/DEFE/24/2476ADD0-4D5A-11E8-BACD-B7E50F03B1FA.jpg",
+      "originalName": null,
+      "size": 126925
+    }
+  ],
+  "id": "5b7afae831863a280c47ce23",
+  "replicaId": "0e50b4e6-e582-43d3-b38f-f8741c770efa",
+  "origination": "DigitalSurrogate",
+  "totalSize": 1295499
+}

@@ -1,11 +1,13 @@
 import PrepareFiles
+import json
 
 
 def prepare_files(event, context):
     if 'body' in event['Records'][0]:
         input_vars = event['Records'][0]['body']
+        input_vars = json.loads(input_vars)
         replica = PrepareFiles.get_replica(input_vars['ReplicaId'])
-        status = replica.process_files(input_vars['FileExtension'],input_vars['MaxDeliverySize'],input_vars['Reference'])
+        status = replica.process_files(input_vars['FileExtension'],input_vars['MaxDeliverySize'],input_vars['Reference'],input_vars['Iaid'])
 
         response = {
             "headers": {
