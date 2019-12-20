@@ -99,7 +99,7 @@ class Replica:
                         file_name = file_key.rpartition('/')[2]
                         print(file_name)
                         s3_client.download_file(s3_bucket_get, file_key, '/tmp/' + file_name)
-                        zip_file.write('/tmp/' + file_name)
+                        zip_file.write('/tmp/' + file_name, file_name)
                         os.remove('/tmp/' + file_name)
                     except ClientError as e:
                         print(e)
