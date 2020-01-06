@@ -106,7 +106,7 @@ class Replica:
                         print('[ERROR 404 NoSuchKey] - Failed to retrieve file from s3: ' + file_key)
                         break
             zip_file.close()
-            success = self._s3_put_object(s3_bucket_put, '/tmp/' + output_name, 'test/' + output_name)
+            success = self._s3_put_object(s3_bucket_put, '/tmp/' + output_name, output_name)
             if success:
                 print('Successfully uploaded to s3: ' + output_name)
                 total_parts = len(batch_list)
@@ -158,7 +158,7 @@ class Replica:
             output_name = output_name_prefix + '{:02d}'.format(n) + '.pdf'
             n += 1
             images[0].save(tmp_path + output_name, save_all=True, quality=100, append_images=images[1:])
-            success = self._s3_put_object(s3_bucket_put, tmp_path + output_name, 'test/' + output_name)
+            success = self._s3_put_object(s3_bucket_put, tmp_path + output_name, output_name)
             if success:
                 print('Successfully uploaded to s3: ' + output_name)
                 total_parts = len(batch_list)
@@ -222,7 +222,7 @@ class Replica:
         else:
             canvas_width = 1191
             canvas_height = 842
-        canvas = Image.new(image_object.mode, (canvas_width, canvas_height), (255, 255, 255))
+        canvas = Image.new("RGB", (canvas_width, canvas_height), (255, 255, 255))
         x1 = int(math.floor((canvas_width - image_width) / 2))
         y1 = int(math.floor((canvas_height - image_height) / 2))
         canvas.paste(image_object, (x1, y1, x1 + image_width, y1 + image_height))
